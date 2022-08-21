@@ -5,8 +5,3 @@ Content-Type: application/json
   "content": "VS Code REST client is pretty cool...",
   "important": false
 }
-
-###
-
-# Seperate multiple requests with the above '###'
-DELETE http://localhost:3001/api/notes
