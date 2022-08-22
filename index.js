@@ -5,30 +5,53 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const Note = require("./models/note");
-const { request, response } = require("express");
 
 const app = express();
 
+// Middleware
+app.use(express.static("build"));
 app.use(express.json());
 app.use(cors());
 
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: "unknown endpoint" });
+// Helper Functions
+const generatedId = () => {
+  const maxId =
+    notes.length > 0 ? Math.max(...notes.map((note) => note.id)) : 0;
+
+  return maxId + 1;
 };
 
-// handler of requests with unknown endpoint
-app.use(unknownEndpoint);
-
+// Root
 app.get("/", (_request, response) => {
   response.send("<h1>Notes App</h1>");
 });
 
+// Create
+app.post("/api/notes", (request, response, next) => {
+  const { content, important } = request.body;
+
+  const note = new Note({
+    content,
+    important: important || false,
+    date: new Date(),
+  });
+
+  note
+    .save()
+    .then((savedNote) => {
+      response.json(savedNote);
+    })
+    .catch((error) => next(error));
+});
+
+// Read All
 app.get("/api/notes", (_request, response) => {
   Note.find({}).then((notes) => {
     response.json(notes);
   });
 });
 
+// Read One
 app.get("/api/notes/:id", (request, response, next) => {
   Note.findById(request.params.id)
     .then((note) => {
@@ -41,52 +64,31 @@ app.get("/api/notes/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-const generatedId = () => {
-  const maxId =
-    notes.length > 0 ? Math.max(...notes.map((note) => note.id)) : 0;
-
-  return maxId + 1;
-};
-
-app.post("/api/notes", (request, response) => {
+// Update
+app.put("api/notes/:id", (request, response, next) => {
   const { content, important } = request.body;
+  const note = { content, important };
 
-  if (!content) {
-    return response.status(400).json({
-      error: "content missing",
-    });
-  }
-
-  const note = new Note({
-    content,
-    important: important || false,
-    date: new Date(),
-  });
-
-  note.save().then((savedNote) => {
-    response.json(savedNote);
-  });
-});
-
-app.delete("/api/notes/:id", (request, response, next) => {
-  Note.findByIdAndRemove(request.params.id)
-    .then((_response) => {
-      // Return 204 status for deleting both
-      // objects that are present and missing
-      response.status(204).end();
+  Note.findByIdAndUpdate(
+    request.params.id,
+    { content, important },
+    { new: true, runValidators: true, context: "query" }
+  )
+    .then((updatedNote) => {
+      response.json(updatedNote);
     })
     .catch((error) => next(error));
 });
 
-app.put("api/notes/:id", (request, response, next) => {
-  const { id } = request.params;
-  const { content, important } = request.body;
-  const note = { content, important };
-
-  Note.findByIdAndUpdate(id, note, { new: true })
-    // 'new' param returns the updated not instead of the original
-    .then((updatedNote) => {
-      response.json(updatedNote);
+// Delete
+app.delete("/api/notes/:id", (request, response, next) => {
+  Note.findByIdAndRemove(request.params.id)
+    .then((deletedNote) => {
+      if (deletedNote) {
+        response.status(204).end();
+      } else {
+        response.status(404).send({ error: "id not found on server" });
+      }
     })
     .catch((error) => next(error));
 });
@@ -96,12 +98,20 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
 
   next(error);
 };
 
 app.use(errorHandler); // Must be last loaded middleware
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
+
+app.use(unknownEndpoint);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
