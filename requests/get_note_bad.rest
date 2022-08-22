@@ -1,0 +1,2 @@
+# Note does not exist
+GET http://localhost:3001/api/notes/1
