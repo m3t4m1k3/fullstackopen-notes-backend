@@ -1,33 +1,24 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
+const express = require('express');
+const cors = require('cors');
 
-require("dotenv").config();
+require('dotenv').config();
 
-const Note = require("./models/note");
+const Note = require('./models/note');
 
 const app = express();
 
 // Middleware
-app.use(express.static("build"));
+app.use(express.static('build'));
 app.use(express.json());
 app.use(cors());
 
-// Helper Functions
-const generatedId = () => {
-  const maxId =
-    notes.length > 0 ? Math.max(...notes.map((note) => note.id)) : 0;
-
-  return maxId + 1;
-};
-
 // Root
-app.get("/", (_request, response) => {
-  response.send("<h1>Notes App</h1>");
+app.get('/', (_request, response) => {
+  response.send('<h1>Notes App</h1>');
 });
 
 // Create
-app.post("/api/notes", (request, response, next) => {
+app.post('/api/notes', (request, response, next) => {
   const { content, important } = request.body;
 
   const note = new Note({
@@ -36,8 +27,7 @@ app.post("/api/notes", (request, response, next) => {
     date: new Date(),
   });
 
-  note
-    .save()
+  note.save()
     .then((savedNote) => {
       response.json(savedNote);
     })
@@ -45,14 +35,14 @@ app.post("/api/notes", (request, response, next) => {
 });
 
 // Read All
-app.get("/api/notes", (_request, response) => {
+app.get('/api/notes', (_request, response) => {
   Note.find({}).then((notes) => {
     response.json(notes);
   });
 });
 
 // Read One
-app.get("/api/notes/:id", (request, response, next) => {
+app.get('/api/notes/:id', (request, response, next) => {
   Note.findById(request.params.id)
     .then((note) => {
       if (note) {
@@ -65,14 +55,13 @@ app.get("/api/notes/:id", (request, response, next) => {
 });
 
 // Update
-app.put("api/notes/:id", (request, response, next) => {
+app.put('api/notes/:id', (request, response, next) => {
   const { content, important } = request.body;
-  const note = { content, important };
 
   Note.findByIdAndUpdate(
     request.params.id,
     { content, important },
-    { new: true, runValidators: true, context: "query" }
+    { new: true, runValidators: true, context: 'query' }
   )
     .then((updatedNote) => {
       response.json(updatedNote);
@@ -81,24 +70,24 @@ app.put("api/notes/:id", (request, response, next) => {
 });
 
 // Delete
-app.delete("/api/notes/:id", (request, response, next) => {
+app.delete('/api/notes/:id', (request, response, next) => {
   Note.findByIdAndRemove(request.params.id)
     .then((deletedNote) => {
       if (deletedNote) {
         response.status(204).end();
       } else {
-        response.status(404).send({ error: "id not found on server" });
+        response.status(404).send({ error: 'id not found on server' });
       }
     })
     .catch((error) => next(error));
 });
 
-const errorHandler = (error, request, response, next) => {
+const errorHandler = (error, _request, response, next) => {
   console.error(error.message);
 
-  if (error.name === "CastError") {
-    return response.status(400).send({ error: "malformatted id" });
-  } else if (error.name === "ValidationError") {
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' });
+  } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message });
   }
 
@@ -107,12 +96,13 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler); // Must be last loaded middleware
 
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: "unknown endpoint" });
+const unknownEndpoint = (_request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' });
 };
 
 app.use(unknownEndpoint);
 
+// eslint-disable-next-line no-undef
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
