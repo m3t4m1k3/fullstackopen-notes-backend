@@ -1,0 +1,14 @@
+# These paths are ignored by default:
+# **/.git
+# **/.svn
+# **/.hg
+# **/node_modules
+
+# Ignore artifacts:
+build
+
+# Ignore all HTML files:
+# *.html
+
+# Ignore files:
+# .prettierrc
