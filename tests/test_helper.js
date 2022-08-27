@@ -1,7 +1,5 @@
 const Note = require('../models/note');
 
-// jest.setTimeout(500000);
-
 const initialNotes = [
   {
     content: 'HTML is easy',

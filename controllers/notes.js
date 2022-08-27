@@ -23,7 +23,7 @@ notesRouter.get('/', async (_request, response) => {
 
 // Read One
 notesRouter.get('/:id', async (request, response) => {
-  const note = Note.findById(request.params.id);
+  const note = await Note.findById(request.params.id);
   if (note) {
     response.json(note);
   } else {
@@ -32,23 +32,22 @@ notesRouter.get('/:id', async (request, response) => {
 });
 
 // Update
-notesRouter.put('/:id', (request, response, next) => {
-  const { id } = request.params;
-  const { content, important } = request.body;
-  const note = { content, important };
+notesRouter.put('/:id', async (request, response) => {
+  const updatedNote = await Note.findByIdAndUpdate(
+    request.params.id,
+    {
+      content: request.bady.content,
+      important: request.bady.important,
+    },
+    { new: true }
+  );
 
-  Note.findByIdAndUpdate(id, note, { new: true })
-    .then((updatedNote) => {
-      response.json(updatedNote);
-    })
-    .catch((error) => next(error));
+  response.json(updatedNote);
 });
 
 // Delete
 notesRouter.delete('/:id', async (request, response) => {
-  const { id } = request.params;
-
-  await Note.findByIdAndRemove(id);
+  await Note.findByIdAndRemove(request.params.id);
   response.status(204).end();
 });
 
