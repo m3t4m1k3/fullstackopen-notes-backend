@@ -5,19 +5,26 @@ const Note = require('../models/note');
 notesRouter.post('/', async (request, response) => {
   const { content, important } = request.body;
 
+  const user = await User.findById(body.userId);
+
   const note = new Note({
     content,
     important: important || false,
     date: new Date(),
+    user: user._id,
   });
 
   const savedNote = await note.save();
+  user.notes = user.notes.concat(savedNote._id);
+  await user.save();
+
   response.status(201).json(savedNote);
 });
 
 // Read All
 notesRouter.get('/', async (_request, response) => {
-  const notes = await Note.find({});
+  const notes = await Note.find({}).populate('user', { username: 1, name: 1 });
+
   response.json(notes);
 });
 
