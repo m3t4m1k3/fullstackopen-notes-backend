@@ -56,11 +56,14 @@ notesRouter.get('/:id', async (request, response) => {
 
 // Update
 notesRouter.put('/:id', async (request, response) => {
+  const { id } = request.params;
+  const { content, important } = request.body;
+
   const updatedNote = await Note.findByIdAndUpdate(
-    request.params.id,
+    id,
     {
-      content: request.bady.content,
-      important: request.bady.important,
+      content,
+      important,
     },
     { new: true }
   );
